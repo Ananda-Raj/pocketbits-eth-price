@@ -1,0 +1,47 @@
+#!/bin/bash
+
+buy_limit=26000
+sell_limit=32000
+
+TOKEN="1043196927:AAFC-G-Vao4N6V20KNPa5pLkoI7ht2Xx-Ecnew"
+ID2="00728428789"
+ID="00-447297512"
+URL="https://api.telegram.org/bot$TOKEN/sendMessage"
+
+curl_input=$(curl https://pocketbits.in/api/tickerall)
+json_output=$(echo -e $curl_input | jq '.' | grep ETH -A2)
+AltBuyPrice=$(echo $json_output | awk '{print $4}' | cut -d "," -f 1)
+AltSellPrice=$(echo $json_output | awk '{print $6}')
+currentdate=$(date -u)
+cvalue=$(bc <<< $AltSellPrice*0.96)
+
+
+#Ethereum
+curl -s -X POST $URL -d chat_id=$ID2 -d text="--ETH--
+Current buying price is $AltBuyPrice
+Current selling price is $AltSellPrice
+
+$currentdate
+Current wallet worth $cvalue
+"
+
+if (( $(echo "$AltBuyPrice < $buy_limit" |bc -l) ));
+then
+	curl -s -X POST $URL -d chat_id=$ID -d text="--ETH-- Buy now at $AltBuyPrice (below your limit $buy_limit)
+	Current buying price is $AltBuyPrice
+	Current selling price is $AltSellPrice
+    Current wallet worth $cvalue
+    	Go to https://pocketbits.in/Altcoins/Index
+	"
+fi
+
+if (( $(echo "$AltSellPrice > $sell_limit" |bc -l) ));
+then
+	curl -s -X POST $URL -d chat_id=$ID -d text="--ETH-- Sell now at $AltSellPrice (above your limit $sell_limit)
+	Current buying price is $AltBuyPrice
+	Current selling price is $AltSellPrice
+    Current wallet worth $cvalue
+        Go to https://pocketbits.in/Altcoins/Index
+	"
+
+fi
